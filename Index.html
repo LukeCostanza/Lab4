@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lab 4</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+       crossorigin=""/>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+       integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+       crossorigin=""></script>
+
+    <script type="text/javascript" src="data.js"></script>  
+    <script type="text/javascript" src="london_421.geojson"></script>
+
+    <style type="text/css">
+        html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+        #map { height: 100%; }
+    </style>
+
+</head>
+
+<body>
+    <div id="map"></div>
+
+    <script type="text/javascript">
+
+        var map = L.map('map', {
+            center: [51.48,-0.07],
+            zoom: 10
+        });
+
+        function getColor(value) {
+            return value > 138 ? '#7a0177':
+                value > 86  ? '#c51b8a':
+                value > 52  ? '#f768a1':
+                value > 31  ? '#fbb4b9':
+                              '#feebe2';
+        }
+
+        function style(feature) {
+            return {
+                fillColor: getColor(feature.properties.pop_den),   
+                weight: 2,
+                opacity: 1,
+                color: 'gray',
+                fillOpacity: 0.9
+            };
+        }
+
+        var canvas = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
+            attribution: 'Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL.',
+            maxZoom: 15,
+            minZoom: 7
+        }).addTo(map);
+
+        var imagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        });
+
+        var boroughs = L.geoJson(data, {
+            style: style,
+        }).bindPopup(function (layer){
+            return layer.feature.properties.NAME 
+                + '<p style="color:purple">' + layer.feature.properties.pop_den.toString() + ' people/hectare </p>';       
+        }).addTo(map);
+
+        var london421Layer = L.geoJson(london_421, {
+            style: style,
+        }).addTo(map);
+
+        var legend = L.control({position: 'bottomleft'});
+
+        legend.onAdd = function (map) {
+            var div = L.DomUtil.create('div', 'legend');
+
+            var grades = [0, 31, 52, 86, 138];
+            var labels = [];
+
+            div.innerHTML = '<b>Population Density <br> 2011 <br></b>';
+
+            for (var i = 0; i < grades.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + getColor(grades[i] + 1) + '"></i>' +
+                    grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+            }
+
+            return div;
+        };
+
+        legend.addTo(map);
+
+    </script>
+</body>
+
+</html>
+
